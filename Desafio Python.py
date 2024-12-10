@@ -3,7 +3,7 @@ from tkinter import messagebox
 import random
 import os
 
-# Lista de participantes
+# Lista de participantess
 participantes = []
 
 # Função para adicionar participante
