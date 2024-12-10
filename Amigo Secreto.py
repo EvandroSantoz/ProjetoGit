@@ -30,6 +30,22 @@ def adicionar_participante():
     else:
         messagebox.showwarning("Erro", "Preencha todos os campos!")
 
+# Função para excluir participante
+def excluir_participante():
+    try:
+        selecionado = listbox_participantes.curselection()
+        if not selecionado:
+            messagebox.showwarning("Erro", "Nenhum participante selecionado!")
+            return
+        indice = selecionado[0]
+        nome = listbox_participantes.get(indice)
+        listbox_participantes.delete(indice)
+        participantes.pop(indice)
+        verificar_participantes()
+        messagebox.showinfo("Sucesso", f"Participante '{nome}' removido!")
+    except IndexError:
+        messagebox.showwarning("Erro", "Não foi possível remover o participante!")
+
 # Função para realizar o sorteio
 def sorteio():
     if len(participantes) < 2:
@@ -37,16 +53,20 @@ def sorteio():
         return
     
     nomes = [p["nome"] for p in participantes]
-    random.shuffle(nomes)
-    sorteados = {}
-    for i, participante in enumerate(participantes):
-        sorteado = nomes[i]
-        while sorteado == participante["nome"]:
-            random.shuffle(nomes)
-            sorteado = nomes[i]
-        sorteados[participante["nome"]] = sorteado
+    sorteados = nomes.copy()
+    random.shuffle(sorteados)
 
-    salvar_em_arquivo(sorteados)
+    # Garante que ninguém tire a si mesmo
+    for i in range(len(nomes)):
+        if nomes[i] == sorteados[i]:
+            # Troca com o próximo, ou com o primeiro se for o último
+            j = (i + 1) % len(nomes)
+            sorteados[i], sorteados[j] = sorteados[j], sorteados[i]
+
+    # Mapeia os resultados
+    resultado = {participantes[i]["nome"]: sorteados[i] for i in range(len(participantes))}
+
+    salvar_em_arquivo(resultado)
     messagebox.showinfo("Sucesso", "Sorteio realizado! Arquivos gerados na pasta 'resultados'.")
 
 # Função para salvar resultados em arquivos
@@ -72,6 +92,8 @@ def salvar_em_arquivo(sorteados):
 def verificar_participantes():
     if len(participantes) >= 2:
         botao_sortear.grid(row=4, column=1, padx=5, pady=10)
+    else:
+        botao_sortear.grid_forget()
 
 # Configuração da Janela Principal
 root = tk.Tk()
@@ -104,6 +126,10 @@ botao_adicionar.grid(row=4, column=0, padx=5, pady=10)
 
 # O botão "Sortear" é criado, mas inicialmente não é exibido
 botao_sortear = tk.Button(frame_adicionar, text="Sortear", font=("Arial", 14), bg=BTN_SECONDARY, fg=BG_COLOR, command=sorteio)
+
+# Botão para excluir participante
+botao_excluir = tk.Button(frame_adicionar, text="Excluir", font=("Arial", 14), bg="#FF0000", fg="#FFFFFF", command=excluir_participante)
+botao_excluir.grid(row=5, column=0, padx=5, pady=10)
 
 # Frame para Exibir Participantes
 frame_lista = tk.Frame(root, bg=BG_COLOR)
